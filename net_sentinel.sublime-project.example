@@ -1,0 +1,91 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "net_sentinel",
+      "file_exclude_patterns": [
+        "*.sublime-workspace",
+        "*.example",
+        "*.iss",
+        "*.spec",
+      ],
+      "folder_exclude_patterns": [
+        "build",
+        "dist",
+        "venv",
+        "__pycache__",
+        "*.egg-info",
+      ],
+    },
+  ],
+  "settings": {
+    "tab_size": 4,
+
+    // Anaconda
+    "python_interpreter": "$project_path/venv/Scripts/python",
+  },
+  "build_systems": [{
+    "name": "venv Python",
+    "shell": true,
+    "working_dir": "$project_path",
+    "variants": [
+      {
+        "name": "Run proj",
+        "file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+        "selector": "source.python",
+        "encoding": "cp1251",
+        "cmd": [
+          "$project_path/venv/Scripts/python", "-u",
+          "$project_path/$project_base_name/$project_base_name.py",
+        ],
+      },
+      {
+        "name": "Run current file",
+        "file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+        "selector": "source.python",
+        "encoding": "cp1251",
+        "cmd": [
+          "$project_path/venv/Scripts/python", "-u", "$file",
+        ],
+      },
+      {
+        "name": "Patch",
+        "encoding": "cp1251",
+        "cmd": [
+          "$project_path/venv/Scripts/python", "-u", "-m", "appver",
+          "--patch",
+          "--newline", "unix",
+          "$project_path/$project_base_name/_version.py",
+        ],
+      },
+      {
+        "name": "Minor",
+        "encoding": "cp1251",
+        "cmd": [
+          "$project_path/venv/Scripts/python", "-u", "-m", "appver",
+          "--minor",
+          "--newline", "unix",
+          "$project_path/$project_base_name/_version.py",
+        ],
+      },
+      {
+        "name": "Major",
+        "encoding": "cp1251",
+        "cmd": [
+          "$project_path/venv/Scripts/python", "-u", "-m", "appver",
+          "--major",
+          "--newline", "unix",
+          "$project_path/$project_base_name/_version.py",
+        ],
+      },
+      {
+        "name": "Release",
+        "encoding": "cp1251",
+        "cmd": [
+          "$project_path/venv/Scripts/python", "-u",
+          "$project_path/$project_base_name/build_exe.py",
+        ],
+      },
+    ],
+  }],
+}
