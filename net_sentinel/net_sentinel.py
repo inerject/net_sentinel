@@ -1,4 +1,5 @@
 import logging
+import os
 import asyncio
 import subprocess
 import time
@@ -68,6 +69,7 @@ async def ssh_dynamic_forwarding(
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
         creationflags=subprocess.CREATE_NO_WINDOW,
+        env={**os.environ, "LANG": "C", "LC_ALL": "C"},
     )
     try:
         await asyncio.gather(
@@ -92,10 +94,11 @@ async def catch_output(stream, default_level=logging.INFO):
         if not data:
             return
 
-        line = data.decode('utf-8').rstrip()
-        if "error" in line.lower():
+        line = data.decode(errors='replace').rstrip().lower()
+
+        if any(word in line for word in ("error", "failed", "fatal")):
             logger.error(line)
-        elif "warn" in line.lower():
+        elif any(word in line for word in ("warn", "deprecated")):
             logger.warning(line)
         else:
             logger.log(default_level, line)
