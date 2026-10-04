@@ -1,3 +1,5 @@
+import tempfile
+from pathlib import Path
 import logging
 import os
 import asyncio
@@ -30,7 +32,8 @@ async def runner(settings):
 async def main(settings):
     while not stop_event.is_set():
         await ssh_dynamic_forwarding(
-            settings['DEST'],
+            settings['HOST'],
+            settings['HOST_PUBLIC_KEY'],
             settings['IDENTITY_FILE'],
             settings['LOCAL_PORT'],
         )
@@ -48,15 +51,24 @@ async def check_stop_event():
 
 
 #
-async def ssh_dynamic_forwarding(dest, identity_file, local_port):
+async def ssh_dynamic_forwarding(host, host_key, identity_file, local_port):
     logger.info('Start ssh forwarding')
+
+    known_hosts_file = Path(tempfile.gettempdir()) / 'net_sentinel_known_hosts'
+    known_hosts_file.write_text(
+        f'{host} {host_key}\n',
+        encoding='utf-8',
+    )
+
     args = [
         '-N',
+        '-o', f'UserKnownHostsFile={known_hosts_file}',
+        '-o', 'StrictHostKeyChecking=yes',
         '-o', 'ServerAliveCountMax=3',
         '-o', 'ServerAliveInterval=5',
         '-o', 'ExitOnForwardFailure=yes',
         '-i', f'{identity_file}',
-        '-D', f'127.0.0.1:{local_port}', f'dyn_forwarding_only@{dest}',
+        '-D', f'127.0.0.1:{local_port}', f'dyn_forwarding_only@{host}',
     ]
 
     global ssh_proc
@@ -67,6 +79,7 @@ async def ssh_dynamic_forwarding(dest, identity_file, local_port):
         creationflags=subprocess.CREATE_NO_WINDOW,
         env={**os.environ, "LANG": "C", "LC_ALL": "C"},
     )
+
     try:
         await asyncio.gather(
             catch_output(ssh_proc.stdout, logging.INFO),
@@ -80,6 +93,8 @@ async def ssh_dynamic_forwarding(dest, identity_file, local_port):
             except asyncio.TimeoutError:
                 ssh_proc.kill()
                 await ssh_proc.wait()
+
+        known_hosts_file.unlink(missing_ok=True)
 
     logger.info('ssh forwarding finished')
 
