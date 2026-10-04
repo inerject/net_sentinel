@@ -105,11 +105,12 @@ async def catch_output(stream, default_level=logging.INFO):
         if not data:
             return
 
-        line = data.decode(errors='replace').rstrip().lower()
+        line = data.decode(errors='replace').rstrip()
+        l_line = line.lower()
 
-        if any(word in line for word in ("error", "failed", "fatal")):
+        if any(word in l_line for word in ("error", "failed", "fatal")):
             logger.error(line)
-        elif any(word in line for word in ("warn", "deprecated")):
+        elif any(word in l_line for word in ("warn", "deprecated")):
             logger.warning(line)
         else:
             logger.log(default_level, line)
