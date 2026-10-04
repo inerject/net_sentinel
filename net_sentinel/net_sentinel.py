@@ -31,7 +31,6 @@ async def main(settings):
     while not stop_event.is_set():
         await ssh_dynamic_forwarding(
             settings['DEST'],
-            settings['DEST_USERNAME'],
             settings['IDENTITY_FILE'],
             settings['LOCAL_PORT'],
         )
@@ -49,10 +48,7 @@ async def check_stop_event():
 
 
 #
-async def ssh_dynamic_forwarding(
-    dest, dest_username, identity_file,
-    local_port, *, local_host='localhost',
-):
+async def ssh_dynamic_forwarding(dest, identity_file, local_port):
     logger.info('Start ssh forwarding')
     args = [
         '-N',
@@ -60,7 +56,7 @@ async def ssh_dynamic_forwarding(
         '-o', 'ServerAliveInterval=5',
         '-o', 'ExitOnForwardFailure=yes',
         '-i', f'{identity_file}',
-        '-D', f'{local_host}:{local_port}', f'{dest_username}@{dest}',
+        '-D', f'127.0.0.1:{local_port}', f'dyn_forwarding_only@{dest}',
     ]
 
     global ssh_proc
